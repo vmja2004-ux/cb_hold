@@ -3,230 +3,368 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>現役 CB 資訊看板 - GitHub 專業版</title>
+    <title>現役 CB 投資分析看板</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
-    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; transition: background-color 0.3s ease; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         
-        table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
-        th { position: sticky; top: 0; z-index: 10; white-space: nowrap; font-weight: 700; cursor: pointer; user-select: none; transition: all 0.2s; font-size: 15px; }
-        td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; border-bottom: 1px solid; transition: all 0.1s; }
-        
-        .column-container { height: calc(100vh - 280px); min-height: 500px; overflow-y: auto; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { border-radius: 10px; }
+        :root {
+            --sticky-bg: #ffffff;
+        }
 
-        /* 白天模式 */
-        .light body { background-color: #f1f5f9; }
-        .light th { background: #e2e8f0; color: #1e293b; border-bottom: 2px solid #cbd5e1; }
-        .light td { border-color: #e2e8f0; }
-        .light .above-average { background-color: #f0fdf4 !important; }
-        .light .above-average td:first-child { border-left: 5px solid #22c55e; }
-        .light tr:hover td { background-color: #1e293b !important; color: #ffffff !important; }
-        .light tr:hover .text-red-600, .light tr:hover .text-rose-500, .light tr:hover .text-blue-500, 
-        .light tr:hover .text-slate-500, .light tr:hover .text-blue-600, .light tr:hover .text-blue-700 { color: #ffffff !important; }
-        .light ::-webkit-scrollbar-thumb { background: #94a3b8; }
+        .dark {
+            --sticky-bg: #0f172a;
+        }
 
-        /* 夜晚模式 */
-        .dark body { background-color: #020617; }
-        .dark .bg-white { background-color: #0f172a; border-color: #1e293b; }
-        .dark th { background: #1e293b; color: #f8fafc; border-bottom: 2px solid #334155; }
-        .dark td { border-color: #1e293b; color: #f1f5f9; }
-        .dark .above-average { background-color: #064e3b !important; }
-        .dark .above-average td { color: #dcfce7 !important; }
-        .dark .above-average td:first-child { border-left: 5px solid #4ade80; }
-        .dark tr:hover td { background-color: #3b82f6 !important; color: #ffffff !important; }
-        .dark tr:hover .text-red-400, .dark tr:hover .text-rose-500, .dark tr:hover .text-blue-400,
-        .dark tr:hover .text-slate-200, .dark tr:hover .text-white { color: #ffffff !important; }
-        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        body { 
+            font-family: 'Inter', 'Noto Sans TC', sans-serif; 
+            transition: background-color 0.3s;
+        }
+
+        /* --- 核心固定邏輯 --- */
+        th { 
+            position: sticky !important; 
+            box-sizing: border-box;
+        }
+
+        .h-row-1 th {
+            top: 0;
+            z-index: 50;
+        }
+
+        .h-row-2 th {
+            top: 60px; 
+            z-index: 45;
+        }
+
+        .sticky-col { 
+            position: sticky; 
+            left: 0; 
+            z-index: 30; 
+            background-color: var(--sticky-bg);
+            border-right: 3px solid #e2e8f0;
+        }
+        .dark .sticky-col { border-right: 3px solid #334155; }
+
+        .sticky-corner-1 { 
+            top: 0;
+            left: 0;
+            z-index: 100 !important;
+            background-color: #1e293b !important;
+        }
         
-        .sort-icon { font-size: 14px; margin-left: 4px; color: #94a3b8; }
-        .active-sort { color: #3b82f6 !important; text-decoration: underline; }
-        .row-selected td { background-color: #f59e0b !important; color: #000000 !important; font-weight: 800 !important; border-left: none !important; }
+        .sticky-corner-2 { 
+            top: 60px;
+            left: 0;
+            z-index: 90 !important;
+            background-color: var(--sticky-bg) !important;
+            border-right: 3px solid #e2e8f0;
+        }
+        .dark .sticky-corner-2 { border-right: 3px solid #334155; }
+
+        /* 穿插標題列的樣式 */
+        .sub-header-row th {
+            background-color: #334155 !important;
+            color: #ffffff !important;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            border-bottom: 1px solid #475569;
+        }
+
+        /* --- 視覺美化 --- */
+        .negative { color: #ef4444; font-weight: 800; }
+        .positive { color: #10b981; font-weight: 800; }
+        .dark .positive { color: #34d399; }
+        .dark .negative { color: #f87171; }
+        
+        .table-container { 
+            border-radius: 20px; 
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); 
+            background: var(--sticky-bg);
+        }
+
+        .val-cell { cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .val-cell:hover { background-color: rgba(59, 130, 246, 0.1) !important; color: #3b82f6; }
+        
+        .num-lg { font-size: 1.25rem; letter-spacing: -0.025em; }
+        
+        .scroll-wrapper {
+            overflow-x: auto;
+            overflow-y: visible;
+            -webkit-overflow-scrolling: touch;
+        }
     </style>
 </head>
-<body class="light py-4 px-2 md:px-6">
-    <div class="max-w-[1920px] mx-auto">
-        <header class="bg-white rounded-xl shadow-md p-5 mb-4 border border-slate-200 transition-colors duration-300">
-            <div class="flex flex-col md:flex-row items-center gap-4">
-                <div class="flex-1 flex items-center justify-between w-full">
-                    <h1 class="text-2xl font-black text-slate-800 flex items-center gap-3">
-                        <div class="bg-blue-600 p-2 rounded-lg shadow-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                            </svg>
-                        </div>
-                        CB 資訊看板 <span class="text-blue-600 font-mono text-lg ml-1">MAX</span>
-                    </h1>
-                    <button id="themeToggle" class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:scale-110 transition-transform shadow-sm">
-                        <svg id="sunIcon" class="w-6 h-6 text-orange-500 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
-                        <svg id="moonIcon" class="w-6 h-6 text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-                    </button>
-                </div>
-                <div class="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                    <input type="file" id="csvFile" accept=".csv" class="text-sm text-slate-500 file:mr-3 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer transition-all">
-                    <input type="text" id="searchInput" placeholder="搜尋代號、名稱..." class="px-5 py-2.5 border-2 border-slate-200 rounded-xl text-lg focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none w-full sm:w-80 dark:bg-slate-900 dark:border-slate-700 dark:text-white">
-                </div>
+<body class="bg-slate-100 text-slate-800 p-4 md:p-8 dark:bg-slate-950 dark:text-slate-200">
+    <div class="max-w-[1900px] mx-auto">
+        <!-- 頂部導航 -->
+        <header class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+                <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight italic underline decoration-blue-500 decoration-4">CB 投資分析看板</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-2 text-lg font-medium">穿插標題優化 · 無單位簡潔模式</p>
             </div>
-            <div class="flex flex-wrap justify-between items-center mt-4 gap-3">
-                <div class="flex gap-6 text-sm font-bold">
-                    <span class="flex items-center gap-2 text-slate-700 dark:text-slate-300"><span class="w-4 h-4 bg-[#f0fdf4] dark:bg-[#064e3b] border-2 border-green-500 rounded"></span> 高溢價標示</span>
-                    <span class="flex items-center gap-2 text-slate-700 dark:text-slate-300"><span class="w-4 h-4 bg-red-100 dark:bg-red-900/50 rounded"></span> 10日新高</span>
+            <div class="flex items-center gap-4">
+                <button onclick="toggleDarkMode()" class="p-3 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 hover:scale-110 transition-transform">
+                    <span id="darkIcon" class="text-2xl">🌙</span>
+                </button>
+                <div id="lastUpdate" class="flex items-center gap-3 bg-white dark:bg-slate-800 px-6 py-3 rounded-2xl border dark:border-slate-700 shadow-sm hidden">
+                    <div class="h-3 w-3 rounded-full bg-blue-500 animate-pulse"></div>
+                    <span id="baseDate" class="font-black text-blue-600 dark:text-blue-400 text-xl">-</span>
                 </div>
-                <p id="status" class="text-blue-600 dark:text-blue-400 text-sm font-black animate-pulse">📢 請上傳數據檔案</p>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            <script>
-                const groupsConfig = [
-                    { id: 1, title: "價值 90 - 100", color: "from-slate-700 to-slate-800" },
-                    { id: 2, title: "價值 100 - 110", color: "from-indigo-700 to-indigo-900" },
-                    { id: 3, title: "價值 110 - 120", color: "from-blue-700 to-blue-900" },
-                    { id: 4, title: "10日新高 (參考價 105-150)", color: "from-rose-700 to-rose-900" }
-                ];
-                let sortStates = { 1: { key: 'convValue', asc: true }, 2: { key: 'convValue', asc: true }, 3: { key: 'convValue', asc: true }, 4: { key: 'cbVolume', asc: false } };
+        <!-- 上傳區域 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            <div id="dropBoard" class="upload-card bg-white p-10 rounded-3xl text-center cursor-pointer border-2 border-dashed border-slate-300 dark:bg-slate-900 dark:border-slate-700 hover:border-blue-500 transition-all" onclick="document.getElementById('boardFile').click()">
+                <input type="file" id="boardFile" class="hidden" accept=".csv">
+                <h3 class="text-2xl font-bold dark:text-white">1. 匯入現役 CB 看板</h3>
+                <p id="boardStatus" class="text-slate-400 mt-2">上傳原始數據 CSV</p>
+            </div>
+            <div id="dropStock" class="upload-card bg-white p-10 rounded-3xl text-center cursor-pointer border-2 border-dashed border-slate-300 dark:bg-slate-900 dark:border-slate-700 hover:border-emerald-500 transition-all" onclick="document.getElementById('stockFile').click()">
+                <input type="file" id="stockFile" class="hidden" accept=".csv">
+                <h3 class="text-2xl font-bold dark:text-white">2. 匯入自選股</h3>
+                <p id="stockStatus" class="text-slate-400 mt-2">上傳自選代碼 CSV</p>
+            </div>
+        </div>
 
-                groupsConfig.forEach(group => {
-                    document.write(`
-                        <div id="section-${group.id}" class="bg-white rounded-2xl shadow-xl border-2 border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden transition-all duration-500">
-                            <div class="bg-gradient-to-r ${group.color} px-5 py-4 flex justify-between items-center">
-                                <h2 class="text-white font-black text-base tracking-widest uppercase">${group.title}</h2>
-                                <div class="flex items-center gap-4">
-                                    <span id="avg-${group.id}" class="text-sm text-white/90 font-mono font-bold px-3 py-1 bg-black/20 rounded-lg">平均溢價: -</span>
-                                    <span id="count-${group.id}" class="bg-white text-slate-900 text-sm px-3 py-1 rounded-lg font-black font-mono">0 檔</span>
-                                </div>
-                            </div>
-                            <div class="column-container">
-                                <table class="text-[14.5px]">
-                                    <thead>
-                                        <tr class="dark:text-slate-200">
-                                            <th class="px-2 py-4 text-left w-20 pl-4" onclick="handleSort(${group.id}, 'code')">代號<span class="sort-icon" id="sort-${group.id}-code">↕</span></th>
-                                            <th class="px-2 py-4 text-left w-24" onclick="handleSort(${group.id}, 'name')">名稱<span class="sort-icon" id="sort-${group.id}-name">↕</span></th>
-                                            <th class="px-2 py-4 text-center w-20" onclick="handleSort(${group.id}, 'refPrice')">參考價<span class="sort-icon" id="sort-${group.id}-refPrice">↕</span></th>
-                                            <th class="px-2 py-4 text-center w-20 text-blue-800 dark:text-blue-300" onclick="handleSort(${group.id}, 'convValue')">價值<span class="sort-icon" id="sort-${group.id}-convValue">▲</span></th>
-                                            <th class="px-2 py-4 text-center w-20" onclick="handleSort(${group.id}, 'premiumValue')">溢價率<span class="sort-icon" id="sort-${group.id}-premiumValue">↕</span></th>
-                                            <th class="px-2 py-4 text-center w-16" onclick="handleSort(${group.id}, 'cbVolume')">成交<span class="sort-icon" id="sort-${group.id}-cbVolume">↕</span></th>
-                                            <th class="px-2 py-4 text-center w-20" onclick="handleSort(${group.id}, 'cbAvg5')">5日均<span class="sort-icon" id="sort-${group.id}-cbAvg5">↕</span></th>
-                                            <th class="px-2 py-4 text-center w-20" onclick="handleSort(${group.id}, 'marginNum')">融券<span class="sort-icon" id="sort-${group.id}-marginNum">↕</span></th>
-                                            <th class="px-2 py-4 text-center w-20" onclick="handleSort(${group.id}, 'trustNum')">投信<span class="sort-icon" id="sort-${group.id}-trustNum">↕</span></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="group-${group.id}" class="divide-y-2 divide-slate-50 dark:divide-slate-800/50"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    `);
-                });
-            </script>
+        <!-- 數據分析結果 -->
+        <div id="resultSection" class="hidden space-y-6">
+            <div class="table-container border dark:border-slate-800">
+                <div class="scroll-wrapper">
+                    <table id="mainTable" class="w-full text-left border-separate border-spacing-0">
+                        <thead>
+                            <!-- 第一行：大區塊 -->
+                            <tr class="h-row-1 bg-slate-900 text-white font-bold text-center text-lg">
+                                <th class="p-4 sticky-corner-1 text-left min-w-[150px]">標的資訊</th>
+                                <th colspan="3" class="p-3 border-x border-slate-700 bg-orange-500/40">投信買賣</th>
+                                <th colspan="3" class="p-3 border-x border-slate-700 bg-purple-500/40">CBAS 拆解</th>
+                                <th colspan="3" class="p-3 border-x border-slate-700 bg-blue-500/40">CB 成交量</th>
+                                <th colspan="3" class="p-3 border-x border-slate-700 bg-red-500/40">融券賣出</th>
+                                <th colspan="3" class="p-3 bg-emerald-500/40">融券現償</th>
+                            </tr>
+                            <!-- 第二行：具體欄位與排序 -->
+                            <tr class="h-row-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-center text-sm font-bold">
+                                <th class="p-4 sticky-corner-2 text-left border-b border-slate-300 dark:border-slate-700 val-cell" onclick="handleSort('remain')">
+                                    代號 / 剩餘 <span id="sort-remain" class="text-blue-500">⇅</span>
+                                </th>
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d1')">1D <span id="sort-it-d1">⇅</span></th>
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d5')">5D <span id="sort-it-d5">⇅</span></th>
+                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d10')">10D <span id="sort-it-d10">⇅</span></th>
+                                
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('as.d1')">1D* <span id="sort-as-d1">⇅</span></th>
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('as.d5')">5D <span id="sort-as-d5">⇅</span></th>
+                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('as.d10')">10D <span id="sort-as-d10">⇅</span></th>
+                                
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('vol.d1')">1D <span id="sort-vol-d1">⇅</span></th>
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('vol.d5')">5D <span id="sort-vol-d5">⇅</span></th>
+                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('vol.d10')">10D <span id="sort-vol-d10">⇅</span></th>
+                                
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblS.d1')">1D <span id="sort-sblS-d1">⇅</span></th>
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblS.d5')">5D <span id="sort-sblS-d5">⇅</span></th>
+                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblS.d10')">10D <span id="sort-sblS-d10">⇅</span></th>
+                                
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblC.d1')">1D <span id="sort-sblC-d1">⇅</span></th>
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblC.d5')">5D <span id="sort-sblC-d5">⇅</span></th>
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblC.d10')">10D <span id="sort-sblC-d10">⇅</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-slate-200 dark:divide-slate-800">
+                            <!-- 數據將注入於此 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" class="hidden py-40 text-center">
+            <div class="inline-block animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent"></div>
+            <p class="mt-8 font-black text-slate-500 text-2xl">核心計算處理中...</p>
+        </div>
+
+        <div id="emptyState" class="py-40 text-center text-slate-300 dark:text-slate-700">
+            <p class="text-3xl font-black italic">請上傳 CSV 開始分析</p>
         </div>
     </div>
 
     <script>
-        let allData = [];
-        const themeToggle = document.getElementById('themeToggle'), sunIcon = document.getElementById('sunIcon'), moonIcon = document.getElementById('moonIcon'), html = document.documentElement, body = document.body;
-        function setTheme(isDark) { if (isDark) { html.classList.add('dark'); body.classList.replace('light', 'dark'); sunIcon.classList.remove('hidden'); moonIcon.classList.add('hidden'); localStorage.setItem('theme', 'dark'); } else { html.classList.remove('dark'); body.classList.replace('dark', 'light'); sunIcon.classList.add('hidden'); moonIcon.classList.remove('hidden'); localStorage.setItem('theme', 'light'); } }
-        setTheme((localStorage.getItem('theme') || 'light') === 'dark');
-        themeToggle.addEventListener('click', () => setTheme(!html.classList.contains('dark')));
-        function toggleRowSelection(row) { row.classList.toggle('row-selected'); }
+        let boardRawRows = [];
+        let stockCodes = [];
+        let currentData = [];
+        let sortState = { key: null, direction: 'desc' };
 
-        document.getElementById('csvFile').addEventListener('change', function(e) {
+        function toggleDarkMode() {
+            const isDark = document.body.classList.toggle('dark');
+            document.getElementById('darkIcon').innerText = isDark ? '☀️' : '🌙';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark');
+            document.getElementById('darkIcon').innerText = '☀️';
+        }
+
+        function parseCSV(text) {
+            const rows = [];
+            let row = [], col = '', inQ = false;
+            for (let i = 0; i < text.length; i++) {
+                let c = text[i], n = text[i+1];
+                if (c === '"' && inQ && n === '"') { col += '"'; i++; }
+                else if (c === '"') { inQ = !inQ; }
+                else if (c === ',' && !inQ) { row.push(col.trim()); col = ''; }
+                else if ((c === '\r' || c === '\n') && !inQ) {
+                    if (col !== '' || row.length > 0) { row.push(col.trim()); rows.push(row); row = []; col = ''; }
+                    if (c === '\r' && n === '\n') i++; 
+                } else { col += c; }
+            }
+            if (col !== '' || row.length > 0) { row.push(col.trim()); rows.push(row); }
+            return rows;
+        }
+
+        function cleanNum(val) {
+            if (!val) return 0;
+            const cleaned = val.toString().replace(/[^0-9.-]/g, '');
+            return parseFloat(cleaned) || 0;
+        }
+
+        document.getElementById('boardFile').onchange = (e) => handleFile(e, 'board');
+        document.getElementById('stockFile').onchange = (e) => handleFile(e, 'stock');
+
+        function handleFile(e, type) {
             const file = e.target.files[0];
             if (!file) return;
-            document.getElementById('status').innerText = '⏳ 解析中...';
-            Papa.parse(file, {
-                header: false, skipEmptyLines: true,
-                complete: function(results) { processCSV(results.data); }
-            });
-        });
-
-        document.getElementById('searchInput').addEventListener('input', () => renderDashboard(allData));
-
-        function handleSort(groupId, key) {
-            const state = sortStates[groupId];
-            if (state.key === key) state.asc = !state.asc;
-            else { state.key = key; state.asc = (key === 'name' || key === 'code') ? true : false; }
-            updateSortIcons(groupId); renderDashboard(allData);
-        }
-
-        function updateSortIcons(groupId) {
-            const state = sortStates[groupId], headers = ['code', 'name', 'refPrice', 'convValue', 'premiumValue', 'cbVolume', 'cbAvg5', 'marginNum', 'trustNum'];
-            headers.forEach(h => { const el = document.getElementById(`sort-${groupId}-${h}`); if (!el) return; if (state.key === h) { el.innerText = state.asc ? '▲' : '▼'; el.classList.add('active-sort'); } else { el.innerText = '↕'; el.classList.remove('active-sort'); } });
-        }
-
-        function processCSV(rows) {
-            const baseHeaderIdx = rows.findIndex(row => row.includes("代號") && row.includes("名稱"));
-            if (baseHeaderIdx === -1) return;
-            const topRow = rows[baseHeaderIdx - 1] || [], headerRow = rows[baseHeaderIdx];
-            const findIdx = (keywords) => headerRow.findIndex(h => keywords.some(kw => h && h.includes(kw)));
-            const findLayeredIdx = (mainKeyword) => {
-                let topIdx = -1; for(let i=0; i<topRow.length; i++) { if(topRow[i] && topRow[i].replace(/\s/g, '').includes(mainKeyword)) { topIdx = i; break; } }
-                if (topIdx === -1) return -1; for(let j=topIdx; j<topIdx+10; j++) { if(headerRow[j] && headerRow[j].match(/\d{2}\/\d{2}/)) return j; } return topIdx;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const data = parseCSV(ev.target.result);
+                if (type === 'board') {
+                    boardRawRows = data;
+                    document.getElementById('boardStatus').innerText = `✅ 看板資料已就緒`;
+                } else {
+                    const h = data[0];
+                    const idx = h.findIndex(x => x.includes('代碼') || x.includes('代號'));
+                    stockCodes = data.slice(1).map(r => r[idx] || r[1]).filter(v => v);
+                    document.getElementById('stockStatus').innerText = `✅ 持股資料已就緒 (${stockCodes.length})`;
+                }
+                if (boardRawRows.length > 0 && stockCodes.length > 0) calculate();
             };
-            const idx = { code: findIdx(["代號"]), name: findIdx(["名稱"]), refPrice: findLayeredIdx("轉債參考價"), convVal: findIdx(["轉換價值"]), margin: findLayeredIdx("標的股票融券賣出"), trust: findLayeredIdx("投信買賣超"), cbVolume: findLayeredIdx("CB成交量") };
-            const parseNum = (val) => { if (!val || val === "-" || val === "0" || val === "") return 0; let n = parseFloat(val.toString().replace(/,/g, '').replace(/%/g, '')); return isNaN(n) ? 0 : n; };
-
-            allData = rows.slice(baseHeaderIdx + 1).map(row => {
-                const name = (row[idx.name] || "").trim(), code = (row[idx.code] || "").trim();
-                if (!name || name === "名稱" || !code) return null;
-                const cbVolToday = parseNum(row[idx.cbVolume]), volHistory = [];
-                for(let i=0; i<10; i++) volHistory.push(parseNum(row[idx.cbVolume + i]));
-                const avg5 = volHistory.slice(0, 5).reduce((a, b) => a + b, 0) / 5, past9Max = Math.max(...volHistory.slice(1, 10));
-                const isNewHigh = cbVolToday > past9Max && cbVolToday > 0;
-                const refPriceVal = parseNum(row[idx.refPrice]), convValue = parseNum(row[idx.convVal]);
-                return { code, name, refPrice: refPriceVal, convValue, premiumValue: convValue > 0 ? (refPriceVal / convValue) - 1 : 0, cbVolume: cbVolToday, cbAvg5: avg5, isNewHigh, margin: row[idx.margin] || "0", marginNum: parseNum(row[idx.margin]), trust: row[idx.trust] || "0", trustNum: parseNum(row[idx.trust]) };
-            }).filter(d => d !== null);
-
-            document.getElementById('status').innerText = `✅ 數據基準日: ${headerRow[idx.cbVolume]}`;
-            renderDashboard(allData);
+            reader.readAsText(file);
         }
 
-        function renderDashboard(data) {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase(), groups = [[], [], [], []], tBodyIds = ['group-1', 'group-2', 'group-3', 'group-4'];
-            const filtered = data.filter(d => d.name.includes(searchTerm) || d.code.includes(searchTerm));
+        function calculate() {
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
 
-            filtered.forEach(item => {
-                const v = item.convValue, vol = item.cbVolume;
-                if (vol > 5) { if (v >= 90 && v < 100) groups[0].push(item); else if (v >= 100 && v < 110) groups[1].push(item); else if (v >= 110 && v <= 120) groups[2].push(item); }
-                if (item.isNewHigh && item.refPrice >= 105 && item.refPrice <= 150) groups[3].push(item);
+            setTimeout(() => {
+                const h0 = boardRawRows[0], h1 = boardRawRows[1], body = boardRawRows.slice(2);
+                const findS = (n) => h0.findIndex(x => x === n || x.includes(n));
+                const findC = (n) => h1.findIndex(x => x === n || x.includes(n));
+
+                const itI = findS("投信買賣超"), asI = findS("CBAS拆解"), volI = findS("CB成交量"),
+                      sS = findS("標的股票融券賣出"), sC = findS("標的股票融券現償");
+                
+                const cI = findC("代號"), nI = findC("名稱"), rI = findC("剩餘%");
+
+                const getD = (s) => {
+                    if (s === -1) return -1;
+                    for (let i = s; i < s + 15; i++) if (h1[i] && h1[i].includes('/')) return i;
+                    return s + 1;
+                };
+
+                const iS = getD(itI), aS = getD(asI), vS = getD(volI), ssS = getD(sS), scS = getD(sC);
+
+                if (iS !== -1) {
+                    document.getElementById('lastUpdate').classList.remove('hidden');
+                    document.getElementById('baseDate').innerText = `基準日：${h1[iS]}`;
+                }
+
+                currentData = body.filter(r => {
+                    const c = (r[cI] || "").toString();
+                    return stockCodes.some(s => c.includes(s.toString()));
+                }).map(r => {
+                    const sum = (st, dy) => {
+                        if (st === -1) return 0;
+                        let t = 0;
+                        for (let i = 0; i < dy; i++) t += cleanNum(r[st + i]);
+                        return t;
+                    };
+                    return {
+                        code: r[cI], name: r[nI], remain: cleanNum(r[rI]),
+                        it: { d1: cleanNum(r[iS]), d5: sum(iS, 5), d10: sum(iS, 10) },
+                        as: { d1: cleanNum(r[aS + 1]), d5: sum(aS, 5), d10: sum(aS, 10) },
+                        vol: { d1: cleanNum(r[vS]), d5: sum(vS, 5), d10: sum(vS, 10) },
+                        sblS: { d1: cleanNum(r[ssS]), d5: sum(ssS, 5), d10: sum(ssS, 10) },
+                        sblC: { d1: cleanNum(r[scS]), d5: sum(scS, 5), d10: sum(scS, 10) }
+                    };
+                });
+                render(currentData);
+            }, 500);
+        }
+
+        function handleSort(key) {
+            if (sortState.key === key) { sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc'; }
+            else { sortState.key = key; sortState.direction = 'desc'; }
+            
+            const sorted = [...currentData].sort((a, b) => {
+                const getV = (o, p) => p.split('.').reduce((x, i) => (x ? x[i] : 0), o);
+                return sortState.direction === 'asc' ? getV(a, key) - getV(b, key) : getV(b, key) - getV(a, key);
             });
+            render(sorted);
+        }
 
-            groups.forEach((group, i) => {
-                const groupId = i + 1, tbody = document.getElementById(tBodyIds[i]), countSpan = document.getElementById(`count-${groupId}`), avgSpan = document.getElementById(`avg-${groupId}`);
-                countSpan.innerText = `${group.length} 檔`;
-                if (group.length === 0) { tbody.innerHTML = `<tr><td colspan="9" class="py-24 text-center text-slate-400 font-bold text-lg">無符合數據</td></tr>`; avgSpan.innerText = "平均溢價: -"; return; }
-                const avgPremium = group.reduce((sum, d) => sum + d.premiumValue, 0) / group.length;
-                avgSpan.innerText = `平均溢價: ${(avgPremium * 100).toFixed(1)}%`;
-                const state = sortStates[groupId];
-                group.sort((a, b) => { let valA = a[state.key], valB = b[state.key]; if (typeof valA === 'string') return state.asc ? valA.localeCompare(valB) : valB.localeCompare(valA); return state.asc ? valA - valB : valB - valA; });
+        function render(data) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('resultSection').classList.remove('hidden');
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = "";
 
-                tbody.innerHTML = group.map(item => {
-                    const isAboveAvg = item.premiumValue > avgPremium;
-                    const premiumClass = isAboveAvg ? 'text-red-600 dark:text-red-400 font-black' : (item.premiumValue > 0 ? 'text-rose-500' : 'text-blue-500');
-                    // 10日新高區塊的成交欄位修正：不使用紅色反白，僅加粗底線
-                    const volClass = item.isNewHigh ? 'text-slate-900 dark:text-white font-black underline decoration-2' : 'text-slate-800 dark:text-slate-200 font-bold';
-                    const trustClass = item.trustNum > 0 ? 'text-red-600 dark:text-red-400 font-black' : (item.trustNum < 0 ? 'text-green-600 dark:text-green-400 font-black' : 'text-slate-400');
-                    return `
-                        <tr class="${isAboveAvg ? 'above-average' : ''} cursor-pointer" onclick="toggleRowSelection(this)">
-                            <td class="px-2 py-3.5 font-mono text-slate-500 pl-4 font-bold transition-all">${item.code}</td>
-                            <td class="px-2 py-3.5 font-black text-slate-800 dark:text-slate-200 truncate">${item.name}</td>
-                            <td class="px-2 py-3.5 text-center text-slate-500 dark:text-slate-400 font-mono font-bold">${item.refPrice === 0 ? '-' : item.refPrice.toFixed(1)}</td>
-                            <td class="px-2 py-3.5 text-center font-black text-slate-900 dark:text-white font-mono text-base">${item.convValue.toFixed(1)}</td>
-                            <td class="px-2 py-3.5 text-center font-mono ${premiumClass}">${(item.premiumValue * 100).toFixed(1)}%</td>
-                            <td class="px-2 py-3.5 text-center font-mono ${volClass}">${item.cbVolume}</td>
-                            <td class="px-2 py-3.5 text-center text-blue-600 dark:text-blue-400 font-black font-mono">${item.cbAvg5.toFixed(1)}</td>
-                            <td class="px-2 py-3.5 text-center text-slate-500 dark:text-slate-400 font-mono font-bold">${item.margin}</td>
-                            <td class="px-2 py-3.5 text-center font-mono ${trustClass}">${item.trust}</td>
-                        </tr>
+            data.forEach((item, index) => {
+                // 每 5 筆插入一次標題列
+                if (index > 0 && index % 5 === 0) {
+                    const subHeader = document.createElement('tr');
+                    subHeader.className = "sub-header-row text-center font-bold";
+                    subHeader.innerHTML = `
+                        <th class="p-3 sticky-col text-left">標的資訊</th>
+                        <th colspan="3" class="p-2 border-x border-slate-600 bg-orange-500/30 text-white">投信買賣</th>
+                        <th colspan="3" class="p-2 border-x border-slate-600 bg-purple-500/30 text-white">CBAS 拆解</th>
+                        <th colspan="3" class="p-2 border-x border-slate-600 bg-blue-500/30 text-white">CB 成交量</th>
+                        <th colspan="3" class="p-2 border-x border-slate-600 bg-red-500/30 text-white">融券賣出</th>
+                        <th colspan="3" class="p-2 bg-emerald-500/30 text-white">融券現償</th>
                     `;
-                }).join('');
+                    tbody.appendChild(subHeader);
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-500/10 transition-colors";
+                const getCls = (v) => v > 0 ? 'positive' : (v < 0 ? 'negative' : 'neutral');
+                const fmt = (v, p = 0) => v.toLocaleString(undefined, { minimumFractionDigits: p, maximumFractionDigits: p });
+                
+                tr.innerHTML = `
+                    <td class="p-6 sticky-col border-b border-slate-100 dark:border-slate-800">
+                        <div class="text-2xl font-black text-slate-900 dark:text-white">${item.code}</div>
+                        <div class="text-xs text-slate-400 font-bold truncate w-32">${item.name}</div>
+                        <div class="mt-2 text-[12px] font-black bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 px-3 py-1 rounded-lg inline-block">剩餘 ${fmt(item.remain, 2)}%</div>
+                    </td>
+                    <td class="p-4 text-center num-lg ${getCls(item.it.d1)}">${fmt(item.it.d1)}</td>
+                    <td class="p-4 text-center font-bold ${getCls(item.it.d5)}">${fmt(item.it.d5)}</td>
+                    <td class="p-4 text-center border-r border-slate-100 dark:border-slate-800 font-bold ${getCls(item.it.d10)}">${fmt(item.it.d10)}</td>
+                    
+                    <td class="p-4 text-center num-lg ${getCls(item.as.d1)}">${fmt(item.as.d1)}</td>
+                    <td class="p-4 text-center font-bold ${getCls(item.as.d5)}">${fmt(item.as.d5)}</td>
+                    <td class="p-4 text-center border-r border-slate-100 dark:border-slate-800 font-bold ${getCls(item.as.d10)}">${fmt(item.as.d10)}</td>
+                    
+                    <td class="p-4 text-center font-black num-lg text-slate-800 dark:text-slate-100">${fmt(item.vol.d1)}</td>
+                    <td class="p-4 text-center font-bold text-slate-500 dark:text-slate-400">${fmt(item.vol.d5)}</td>
+                    <td class="p-4 text-center border-r border-slate-100 dark:border-slate-800 font-bold text-slate-500 dark:text-slate-400">${fmt(item.vol.d10)}</td>
+                    
+                    <td class="p-4 text-center num-lg ${getCls(item.sblS.d1)}">${fmt(item.sblS.d1)}</td>
+                    <td class="p-4 text-center font-bold ${getCls(item.sblS.d5)}">${fmt(item.sblS.d5)}</td>
+                    <td class="p-4 text-center border-r border-slate-100 dark:border-slate-800 font-bold ${getCls(item.sblS.d10)}">${fmt(item.sblS.d10)}</td>
+                    
+                    <td class="p-4 text-center num-lg ${getCls(item.sblC.d1)}">${fmt(item.sblC.d1)}</td>
+                    <td class="p-4 text-center font-bold ${getCls(item.sblC.d5)}">${fmt(item.sblC.d5)}</td>
+                    <td class="p-4 text-center font-bold ${getCls(item.sblC.d10)}">${fmt(item.sblC.d10)}</td>
+                `;
+                tbody.appendChild(tr);
             });
         }
     </script>
