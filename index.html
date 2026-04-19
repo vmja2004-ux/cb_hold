@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>現役 CB 投資分析看板</title>
+    <title>CB持有組合籌碼統計</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -101,7 +101,7 @@
         <header class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
                 <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight italic underline decoration-blue-500 decoration-4">CB 投資分析看板</h1>
-                <p class="text-slate-500 dark:text-slate-400 mt-2 text-lg font-medium">穿插標題優化 · 無單位簡潔模式</p>
+                <p class="text-slate-500 dark:text-slate-400 mt-2 text-lg font-medium">穿插標題優化 · 5D/10D均量模式</p>
             </div>
             <div class="flex items-center gap-4">
                 <button onclick="toggleDarkMode()" class="p-3 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 hover:scale-110 transition-transform">
@@ -149,24 +149,24 @@
                                     代號 / 剩餘 <span id="sort-remain" class="text-blue-500">⇅</span>
                                 </th>
                                 <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d1')">1D <span id="sort-it-d1">⇅</span></th>
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d5')">5D <span id="sort-it-d5">⇅</span></th>
-                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d10')">10D <span id="sort-it-d10">⇅</span></th>
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d5')">5D累 <span id="sort-it-d5">⇅</span></th>
+                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d10')">10D累 <span id="sort-it-d10">⇅</span></th>
                                 
                                 <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('as.d1')">1D* <span id="sort-as-d1">⇅</span></th>
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('as.d5')">5D <span id="sort-as-d5">⇅</span></th>
-                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('as.d10')">10D <span id="sort-as-d10">⇅</span></th>
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('as.d5')">5D均 <span id="sort-as-d5">⇅</span></th>
+                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('as.d10')">10D均 <span id="sort-as-d10">⇅</span></th>
                                 
                                 <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('vol.d1')">1D <span id="sort-vol-d1">⇅</span></th>
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('vol.d5')">5D <span id="sort-vol-d5">⇅</span></th>
-                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('vol.d10')">10D <span id="sort-vol-d10">⇅</span></th>
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('vol.d5')">5D均 <span id="sort-vol-d5">⇅</span></th>
+                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('vol.d10')">10D均 <span id="sort-vol-d10">⇅</span></th>
                                 
                                 <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblS.d1')">1D <span id="sort-sblS-d1">⇅</span></th>
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblS.d5')">5D <span id="sort-sblS-d5">⇅</span></th>
-                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblS.d10')">10D <span id="sort-sblS-d10">⇅</span></th>
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblS.d5')">5D累 <span id="sort-sblS-d5">⇅</span></th>
+                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblS.d10')">10D累 <span id="sort-sblS-d10">⇅</span></th>
                                 
                                 <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblC.d1')">1D <span id="sort-sblC-d1">⇅</span></th>
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblC.d5')">5D <span id="sort-sblC-d5">⇅</span></th>
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblC.d10')">10D <span id="sort-sblC-d10">⇅</span></th>
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblC.d5')">5D累 <span id="sort-sblC-d5">⇅</span></th>
+                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblC.d10')">10D累 <span id="sort-sblC-d10">⇅</span></th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="divide-y divide-slate-200 dark:divide-slate-800">
@@ -290,8 +290,10 @@
                     return {
                         code: r[cI], name: r[nI], remain: cleanNum(r[rI]),
                         it: { d1: cleanNum(r[iS]), d5: sum(iS, 5), d10: sum(iS, 10) },
-                        as: { d1: cleanNum(r[aS + 1]), d5: sum(aS, 5), d10: sum(aS, 10) },
-                        vol: { d1: cleanNum(r[vS]), d5: sum(vS, 5), d10: sum(vS, 10) },
+                        // CBAS: 5D/10D 改為均量
+                        as: { d1: cleanNum(r[aS + 1]), d5: sum(aS, 5) / 5, d10: sum(aS, 10) / 10 },
+                        // CB成交量: 5D/10D 改為均量
+                        vol: { d1: cleanNum(r[vS]), d5: sum(vS, 5) / 5, d10: sum(vS, 10) / 10 },
                         sblS: { d1: cleanNum(r[ssS]), d5: sum(ssS, 5), d10: sum(ssS, 10) },
                         sblC: { d1: cleanNum(r[scS]), d5: sum(scS, 5), d10: sum(scS, 10) }
                     };
@@ -344,22 +346,27 @@
                         <div class="text-xs text-slate-400 font-bold truncate w-32">${item.name}</div>
                         <div class="mt-2 text-[12px] font-black bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 px-3 py-1 rounded-lg inline-block">剩餘 ${fmt(item.remain, 2)}%</div>
                     </td>
+                    <!-- 投信 (累計) -->
                     <td class="p-4 text-center num-lg ${getCls(item.it.d1)}">${fmt(item.it.d1)}</td>
                     <td class="p-4 text-center font-bold ${getCls(item.it.d5)}">${fmt(item.it.d5)}</td>
                     <td class="p-4 text-center border-r border-slate-100 dark:border-slate-800 font-bold ${getCls(item.it.d10)}">${fmt(item.it.d10)}</td>
                     
+                    <!-- CBAS (均量) -->
                     <td class="p-4 text-center num-lg ${getCls(item.as.d1)}">${fmt(item.as.d1)}</td>
-                    <td class="p-4 text-center font-bold ${getCls(item.as.d5)}">${fmt(item.as.d5)}</td>
-                    <td class="p-4 text-center border-r border-slate-100 dark:border-slate-800 font-bold ${getCls(item.as.d10)}">${fmt(item.as.d10)}</td>
+                    <td class="p-4 text-center font-bold ${getCls(item.as.d5)}">${fmt(item.as.d5, 1)}</td>
+                    <td class="p-4 text-center border-r border-slate-100 dark:border-slate-800 font-bold ${getCls(item.as.d10)}">${fmt(item.as.d10, 1)}</td>
                     
+                    <!-- CB成交量 (均量) -->
                     <td class="p-4 text-center font-black num-lg text-slate-800 dark:text-slate-100">${fmt(item.vol.d1)}</td>
-                    <td class="p-4 text-center font-bold text-slate-500 dark:text-slate-400">${fmt(item.vol.d5)}</td>
-                    <td class="p-4 text-center border-r border-slate-100 dark:border-slate-800 font-bold text-slate-500 dark:text-slate-400">${fmt(item.vol.d10)}</td>
+                    <td class="p-4 text-center font-bold text-slate-500 dark:text-slate-400">${fmt(item.vol.d5, 1)}</td>
+                    <td class="p-4 text-center border-r border-slate-100 dark:border-slate-800 font-bold text-slate-500 dark:text-slate-400">${fmt(item.vol.d10, 1)}</td>
                     
+                    <!-- 融券賣出 (累計) -->
                     <td class="p-4 text-center num-lg ${getCls(item.sblS.d1)}">${fmt(item.sblS.d1)}</td>
                     <td class="p-4 text-center font-bold ${getCls(item.sblS.d5)}">${fmt(item.sblS.d5)}</td>
                     <td class="p-4 text-center border-r border-slate-100 dark:border-slate-800 font-bold ${getCls(item.sblS.d10)}">${fmt(item.sblS.d10)}</td>
                     
+                    <!-- 融券現償 (累計) -->
                     <td class="p-4 text-center num-lg ${getCls(item.sblC.d1)}">${fmt(item.sblC.d1)}</td>
                     <td class="p-4 text-center font-bold ${getCls(item.sblC.d5)}">${fmt(item.sblC.d5)}</td>
                     <td class="p-4 text-center font-bold ${getCls(item.sblC.d10)}">${fmt(item.sblC.d10)}</td>
