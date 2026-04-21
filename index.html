@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CB持有組合籌碼統計</title>
+    <title>CB持有籌碼分析</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -21,10 +21,11 @@
             transition: background-color 0.3s;
         }
 
-        /* --- 核心固定邏輯 --- */
+        /* --- 核心固定邏輯 (版面緊湊化調整) --- */
         th { 
             position: sticky !important; 
             box-sizing: border-box;
+            padding: 0.5rem !important;
         }
 
         .h-row-1 th {
@@ -33,7 +34,7 @@
         }
 
         .h-row-2 th {
-            top: 60px; 
+            top: 52px; /* 緊湊版第一行高度 */
             z-index: 45;
         }
 
@@ -42,9 +43,10 @@
             left: 0; 
             z-index: 30; 
             background-color: var(--sticky-bg);
-            border-right: 3px solid #e2e8f0;
+            border-right: 2px solid #e2e8f0;
+            min-width: 120px;
         }
-        .dark .sticky-col { border-right: 3px solid #334155; }
+        .dark .sticky-col { border-right: 2px solid #334155; }
 
         .sticky-corner-1 { 
             top: 0;
@@ -54,123 +56,135 @@
         }
         
         .sticky-corner-2 { 
-            top: 60px;
+            top: 52px;
             left: 0;
             z-index: 90 !important;
             background-color: var(--sticky-bg) !important;
-            border-right: 3px solid #e2e8f0;
+            border-right: 2px solid #e2e8f0;
         }
-        .dark .sticky-corner-2 { border-right: 3px solid #334155; }
+        .dark .sticky-corner-2 { border-right: 2px solid #334155; }
 
-        /* 穿插標題列的樣式 */
+        /* 穿插標題列 */
         .sub-header-row th {
             background-color: #334155 !important;
             color: #ffffff !important;
-            padding: 0.75rem;
-            font-size: 0.875rem;
+            padding: 0.5rem !important;
+            font-size: 0.75rem;
             border-bottom: 1px solid #475569;
         }
 
         /* --- 視覺美化 --- */
-        .negative { color: #ef4444; font-weight: 800; }
-        .positive { color: #10b981; font-weight: 800; }
+        .negative { color: #ef4444; font-weight: 700; }
+        .positive { color: #10b981; font-weight: 700; }
         .dark .positive { color: #34d399; }
         .dark .negative { color: #f87171; }
         
         .table-container { 
-            border-radius: 20px; 
-            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); 
+            border-radius: 12px; 
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); 
             background: var(--sticky-bg);
         }
 
         .val-cell { cursor: pointer; transition: all 0.2s; white-space: nowrap; }
         .val-cell:hover { background-color: rgba(59, 130, 246, 0.1) !important; color: #3b82f6; }
         
-        .num-lg { font-size: 1.25rem; letter-spacing: -0.025em; }
+        .num-xl { font-size: 1.1rem; letter-spacing: -0.02em; }
+        .num-sm { font-size: 0.875rem; }
         
         .scroll-wrapper {
             overflow-x: auto;
             overflow-y: visible;
             -webkit-overflow-scrolling: touch;
         }
+
+        /* 緊湊 Padding */
+        td { padding: 0.5rem 0.4rem !important; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 p-4 md:p-8 dark:bg-slate-950 dark:text-slate-200">
-    <div class="max-w-[1900px] mx-auto">
+<body class="bg-slate-50 text-slate-800 p-2 md:p-6 dark:bg-slate-950 dark:text-slate-200">
+    <div class="max-w-[2200px] mx-auto">
         <!-- 頂部導航 -->
-        <header class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <header class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-                <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight italic underline decoration-blue-500 decoration-4">CB 投資分析看板</h1>
-                <p class="text-slate-500 dark:text-slate-400 mt-2 text-lg font-medium">穿插標題優化 · 5D/10D均量模式</p>
+                <h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tighter italic underline decoration-blue-500 decoration-2">CB 投資分析看板</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm font-medium italic">緊湊版面 · 價格整數化 · 溢價率監控</p>
             </div>
-            <div class="flex items-center gap-4">
-                <button onclick="toggleDarkMode()" class="p-3 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 hover:scale-110 transition-transform">
-                    <span id="darkIcon" class="text-2xl">🌙</span>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 hover:scale-105 transition-transform">
+                    <span id="darkIcon" class="text-xl">🌙</span>
                 </button>
-                <div id="lastUpdate" class="flex items-center gap-3 bg-white dark:bg-slate-800 px-6 py-3 rounded-2xl border dark:border-slate-700 shadow-sm hidden">
-                    <div class="h-3 w-3 rounded-full bg-blue-500 animate-pulse"></div>
-                    <span id="baseDate" class="font-black text-blue-600 dark:text-blue-400 text-xl">-</span>
+                <div id="lastUpdate" class="flex items-center gap-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-xl border dark:border-slate-700 shadow-sm hidden">
+                    <div class="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
+                    <span id="baseDate" class="font-black text-blue-600 dark:text-blue-400 text-base">-</span>
                 </div>
             </div>
         </header>
 
-        <!-- 上傳區域 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-            <div id="dropBoard" class="upload-card bg-white p-10 rounded-3xl text-center cursor-pointer border-2 border-dashed border-slate-300 dark:bg-slate-900 dark:border-slate-700 hover:border-blue-500 transition-all" onclick="document.getElementById('boardFile').click()">
+        <!-- 上傳區域 (緊湊化) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div id="dropBoard" class="upload-card bg-white p-6 rounded-2xl text-center cursor-pointer border-2 border-dashed border-slate-300 dark:bg-slate-900 dark:border-slate-700 hover:border-blue-500 transition-all" onclick="document.getElementById('boardFile').click()">
                 <input type="file" id="boardFile" class="hidden" accept=".csv">
-                <h3 class="text-2xl font-bold dark:text-white">1. 匯入現役 CB 看板</h3>
-                <p id="boardStatus" class="text-slate-400 mt-2">上傳原始數據 CSV</p>
+                <h3 class="text-lg font-bold dark:text-white leading-none">1. 匯入現役 CB 看板</h3>
+                <p id="boardStatus" class="text-slate-400 mt-2 text-xs">上傳原始數據 CSV</p>
             </div>
-            <div id="dropStock" class="upload-card bg-white p-10 rounded-3xl text-center cursor-pointer border-2 border-dashed border-slate-300 dark:bg-slate-900 dark:border-slate-700 hover:border-emerald-500 transition-all" onclick="document.getElementById('stockFile').click()">
+            <div id="dropStock" class="upload-card bg-white p-6 rounded-2xl text-center cursor-pointer border-2 border-dashed border-slate-300 dark:bg-slate-900 dark:border-slate-700 hover:border-emerald-500 transition-all" onclick="document.getElementById('stockFile').click()">
                 <input type="file" id="stockFile" class="hidden" accept=".csv">
-                <h3 class="text-2xl font-bold dark:text-white">2. 匯入自選股</h3>
-                <p id="stockStatus" class="text-slate-400 mt-2">上傳自選代碼 CSV</p>
+                <h3 class="text-lg font-bold dark:text-white leading-none">2. 匯入自選股</h3>
+                <p id="stockStatus" class="text-slate-400 mt-2 text-xs">上傳自選代碼 CSV</p>
             </div>
         </div>
 
         <!-- 數據分析結果 -->
-        <div id="resultSection" class="hidden space-y-6">
+        <div id="resultSection" class="hidden space-y-4">
+            <!-- 結果頂部工具欄 -->
+            <div class="flex justify-between items-center px-1">
+                <span id="matchCount" class="text-xs font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 px-3 py-1.5 rounded-lg shadow-sm border border-blue-200 dark:border-blue-800">匹配: 0 檔</span>
+                <button onclick="location.reload()" class="text-xs font-bold text-slate-400 hover:text-blue-500 transition-colors">重新上傳</button>
+            </div>
+
             <div class="table-container border dark:border-slate-800">
                 <div class="scroll-wrapper">
                     <table id="mainTable" class="w-full text-left border-separate border-spacing-0">
                         <thead>
                             <!-- 第一行：大區塊 -->
-                            <tr class="h-row-1 bg-slate-900 text-white font-bold text-center text-lg">
-                                <th class="p-4 sticky-corner-1 text-left min-w-[150px]">標的資訊</th>
-                                <th colspan="3" class="p-3 border-x border-slate-700 bg-orange-500/40">投信買賣</th>
-                                <th colspan="3" class="p-3 border-x border-slate-700 bg-purple-500/40">CBAS 拆解</th>
-                                <th colspan="3" class="p-3 border-x border-slate-700 bg-blue-500/40">CB 成交量</th>
-                                <th colspan="3" class="p-3 border-x border-slate-700 bg-red-500/40">融券賣出</th>
-                                <th colspan="3" class="p-3 bg-emerald-500/40">融券現償</th>
+                            <tr class="h-row-1 bg-slate-900 text-white font-bold text-center text-base">
+                                <th class="p-4 sticky-corner-1 text-left min-w-[130px]">標的資訊</th>
+                                <th colspan="3" class="p-2 border-x border-slate-700 bg-emerald-500/30">價格資訊</th>
+                                <th colspan="3" class="p-2 border-x border-slate-700 bg-orange-500/30">投信買賣</th>
+                                <th colspan="3" class="p-2 border-x border-slate-700 bg-purple-500/30">CBAS 拆解</th>
+                                <th colspan="3" class="p-2 border-x border-slate-700 bg-blue-500/30">CB 成交量</th>
+                                <th colspan="3" class="p-2 border-x border-slate-700 bg-red-500/30">融券賣出</th>
+                                <th colspan="3" class="p-2 bg-emerald-500/30">融券現償</th>
                             </tr>
-                            <!-- 第二行：具體欄位與排序 -->
-                            <tr class="h-row-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-center text-sm font-bold">
+                            <!-- 第二行：排序欄位 -->
+                            <tr class="h-row-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-center text-xs font-bold">
                                 <th class="p-4 sticky-corner-2 text-left border-b border-slate-300 dark:border-slate-700 val-cell" onclick="handleSort('remain')">
-                                    代號 / 剩餘 <span id="sort-remain" class="text-blue-500">⇅</span>
+                                    代號/剩餘 <span id="sort-remain" class="text-blue-500">⇅</span>
                                 </th>
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d1')">1D <span id="sort-it-d1">⇅</span></th>
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d5')">5D累 <span id="sort-it-d5">⇅</span></th>
-                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d10')">10D累 <span id="sort-it-d10">⇅</span></th>
-                                
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('as.d1')">1D* <span id="sort-as-d1">⇅</span></th>
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('as.d5')">5D均 <span id="sort-as-d5">⇅</span></th>
-                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('as.d10')">10D均 <span id="sort-as-d10">⇅</span></th>
-                                
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('vol.d1')">1D <span id="sort-vol-d1">⇅</span></th>
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('vol.d5')">5D均 <span id="sort-vol-d5">⇅</span></th>
-                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('vol.d10')">10D均 <span id="sort-vol-d10">⇅</span></th>
-                                
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblS.d1')">1D <span id="sort-sblS-d1">⇅</span></th>
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblS.d5')">5D累 <span id="sort-sblS-d5">⇅</span></th>
-                                <th class="p-3 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblS.d10')">10D累 <span id="sort-sblS-d10">⇅</span></th>
-                                
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblC.d1')">1D <span id="sort-sblC-d1">⇅</span></th>
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblC.d5')">5D累 <span id="sort-sblC-d5">⇅</span></th>
-                                <th class="p-3 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblC.d10')">10D累 <span id="sort-sblC-d10">⇅</span></th>
+                                <!-- 價格 -->
+                                <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700 bg-emerald-50/10" onclick="handleSort('price.cb')">轉債 <span id="sort-price-cb">⇅</span></th>
+                                <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700 bg-emerald-50/10" onclick="handleSort('price.conv')">轉換 <span id="sort-price-conv">⇅</span></th>
+                                <th class="p-2 val-cell border-r border-b border-slate-300 dark:border-slate-700 bg-emerald-50/10 text-emerald-600 dark:text-emerald-400" onclick="handleSort('price.premium')">溢價% <span id="sort-price-premium">⇅</span></th>
+                                <!-- 數據 -->
+                                <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d1')">1D <span id="sort-it-d1">⇅</span></th>
+                                <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d5')">5D累 <span id="sort-it-d5">⇅</span></th>
+                                <th class="p-2 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d10')">10D累 <span id="sort-it-d10">⇅</span></th>
+                                <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('as.d1')">1D* <span id="sort-as-d1">⇅</span></th>
+                                <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('as.d5')">5D均 <span id="sort-as-d5">⇅</span></th>
+                                <th class="p-2 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('as.d10')">10D均 <span id="sort-as-d10">⇅</span></th>
+                                <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('vol.d1')">1D <span id="sort-vol-d1">⇅</span></th>
+                                <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('vol.d5')">5D均 <span id="sort-vol-d5">⇅</span></th>
+                                <th class="p-2 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('vol.d10')">10D均 <span id="sort-vol-d10">⇅</span></th>
+                                <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblS.d1')">1D <span id="sort-sblS-d1">⇅</span></th>
+                                <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblS.d5')">5D累 <span id="sort-sblS-d5">⇅</span></th>
+                                <th class="p-2 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblS.d10')">10D累 <span id="sort-sblS-d10">⇅</span></th>
+                                <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblC.d1')">1D <span id="sort-sblC-d1">⇅</span></th>
+                                <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblC.d5')">5D累 <span id="sort-sblC-d5">⇅</span></th>
+                                <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('sblC.d10')">10D累 <span id="sort-sblC-d10">⇅</span></th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-200 dark:divide-slate-800">
-                            <!-- 數據將注入於此 -->
+                        <tbody id="tableBody" class="divide-y divide-slate-200 dark:divide-slate-800 text-sm">
+                            <!-- 數據注入 -->
                         </tbody>
                     </table>
                 </div>
@@ -178,12 +192,12 @@
         </div>
 
         <div id="loading" class="hidden py-40 text-center">
-            <div class="inline-block animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent"></div>
-            <p class="mt-8 font-black text-slate-500 text-2xl">核心計算處理中...</p>
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+            <p class="mt-4 font-black text-slate-500 text-xl tracking-widest">ANALYZING...</p>
         </div>
 
         <div id="emptyState" class="py-40 text-center text-slate-300 dark:text-slate-700">
-            <p class="text-3xl font-black italic">請上傳 CSV 開始分析</p>
+            <p class="text-2xl font-black italic tracking-widest">WAITING FOR CSV UPLOAD...</p>
         </div>
     </div>
 
@@ -238,12 +252,12 @@
                 const data = parseCSV(ev.target.result);
                 if (type === 'board') {
                     boardRawRows = data;
-                    document.getElementById('boardStatus').innerText = `✅ 看板資料已就緒`;
+                    document.getElementById('boardStatus').innerText = `✅ 看板資料已讀取`;
                 } else {
                     const h = data[0];
                     const idx = h.findIndex(x => x.includes('代碼') || x.includes('代號'));
                     stockCodes = data.slice(1).map(r => r[idx] || r[1]).filter(v => v);
-                    document.getElementById('stockStatus').innerText = `✅ 持股資料已就緒 (${stockCodes.length})`;
+                    document.getElementById('stockStatus').innerText = `✅ 持股資料已讀取 (${stockCodes.length})`;
                 }
                 if (boardRawRows.length > 0 && stockCodes.length > 0) calculate();
             };
@@ -260,17 +274,19 @@
                 const findC = (n) => h1.findIndex(x => x === n || x.includes(n));
 
                 const itI = findS("投信買賣超"), asI = findS("CBAS拆解"), volI = findS("CB成交量"),
-                      sS = findS("標的股票融券賣出"), sC = findS("標的股票融券現償");
+                      sS = findS("標的股票融券賣出"), sC = findS("標的股票融券現償"),
+                      pC = findS("轉債參考價"), cV = findS("轉換價值");
                 
                 const cI = findC("代號"), nI = findC("名稱"), rI = findC("剩餘%");
 
                 const getD = (s) => {
                     if (s === -1) return -1;
                     for (let i = s; i < s + 15; i++) if (h1[i] && h1[i].includes('/')) return i;
-                    return s + 1;
+                    return s;
                 };
 
                 const iS = getD(itI), aS = getD(asI), vS = getD(volI), ssS = getD(sS), scS = getD(sC);
+                const pcS = getD(pC), cvS = getD(cV);
 
                 if (iS !== -1) {
                     document.getElementById('lastUpdate').classList.remove('hidden');
@@ -287,12 +303,15 @@
                         for (let i = 0; i < dy; i++) t += cleanNum(r[st + i]);
                         return t;
                     };
+                    const cbVal = cleanNum(r[pcS]);
+                    const convVal = cleanNum(r[cvS]);
+                    const premiumVal = convVal !== 0 ? (cbVal / convVal - 1) * 100 : 0;
+
                     return {
                         code: r[cI], name: r[nI], remain: cleanNum(r[rI]),
+                        price: { cb: cbVal, conv: convVal, premium: premiumVal },
                         it: { d1: cleanNum(r[iS]), d5: sum(iS, 5), d10: sum(iS, 10) },
-                        // CBAS: 5D/10D 改為均量
                         as: { d1: cleanNum(r[aS + 1]), d5: sum(aS, 5) / 5, d10: sum(aS, 10) / 10 },
-                        // CB成交量: 5D/10D 改為均量
                         vol: { d1: cleanNum(r[vS]), d5: sum(vS, 5) / 5, d10: sum(vS, 10) / 10 },
                         sblS: { d1: cleanNum(r[ssS]), d5: sum(ssS, 5), d10: sum(ssS, 10) },
                         sblC: { d1: cleanNum(r[scS]), d5: sum(scS, 5), d10: sum(scS, 10) }
@@ -305,7 +324,6 @@
         function handleSort(key) {
             if (sortState.key === key) { sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc'; }
             else { sortState.key = key; sortState.direction = 'desc'; }
-            
             const sorted = [...currentData].sort((a, b) => {
                 const getV = (o, p) => p.split('.').reduce((x, i) => (x ? x[i] : 0), o);
                 return sortState.direction === 'asc' ? getV(a, key) - getV(b, key) : getV(b, key) - getV(a, key);
@@ -316,16 +334,23 @@
         function render(data) {
             document.getElementById('loading').classList.add('hidden');
             document.getElementById('resultSection').classList.remove('hidden');
+            
+            // 修復點：確保在更新 innerText 前元素存在
+            const matchCountEl = document.getElementById('matchCount');
+            if (matchCountEl) {
+                matchCountEl.innerText = `匹配: ${data.length} 檔`;
+            }
+
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = "";
 
             data.forEach((item, index) => {
-                // 每 5 筆插入一次標題列
                 if (index > 0 && index % 5 === 0) {
                     const subHeader = document.createElement('tr');
                     subHeader.className = "sub-header-row text-center font-bold";
                     subHeader.innerHTML = `
                         <th class="p-3 sticky-col text-left">標的資訊</th>
+                        <th colspan="3" class="p-2 border-x border-slate-600 bg-emerald-500/30 text-white">價格資訊</th>
                         <th colspan="3" class="p-2 border-x border-slate-600 bg-orange-500/30 text-white">投信買賣</th>
                         <th colspan="3" class="p-2 border-x border-slate-600 bg-purple-500/30 text-white">CBAS 拆解</th>
                         <th colspan="3" class="p-2 border-x border-slate-600 bg-blue-500/30 text-white">CB 成交量</th>
@@ -341,35 +366,34 @@
                 const fmt = (v, p = 0) => v.toLocaleString(undefined, { minimumFractionDigits: p, maximumFractionDigits: p });
                 
                 tr.innerHTML = `
-                    <td class="p-6 sticky-col border-b border-slate-100 dark:border-slate-800">
-                        <div class="text-2xl font-black text-slate-900 dark:text-white">${item.code}</div>
-                        <div class="text-xs text-slate-400 font-bold truncate w-32">${item.name}</div>
-                        <div class="mt-2 text-[12px] font-black bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 px-3 py-1 rounded-lg inline-block">剩餘 ${fmt(item.remain, 2)}%</div>
+                    <td class="p-4 sticky-col border-b border-slate-100 dark:border-slate-800">
+                        <div class="text-xl font-extrabold text-slate-900 dark:text-white">${item.code}</div>
+                        <div class="text-[10px] text-slate-400 font-bold truncate w-24">${item.name}</div>
+                        <div class="text-[10px] font-black text-blue-500">剩餘 ${fmt(item.remain, 2)}%</div>
                     </td>
-                    <!-- 投信 (累計) -->
-                    <td class="p-4 text-center num-lg ${getCls(item.it.d1)}">${fmt(item.it.d1)}</td>
-                    <td class="p-4 text-center font-bold ${getCls(item.it.d5)}">${fmt(item.it.d5)}</td>
-                    <td class="p-4 text-center border-r border-slate-100 dark:border-slate-800 font-bold ${getCls(item.it.d10)}">${fmt(item.it.d10)}</td>
+                    <td class="p-3 text-center num-xl font-bold text-slate-700 dark:text-slate-200">${Math.round(item.price.cb)}</td>
+                    <td class="p-3 text-center num-xl font-bold text-slate-700 dark:text-slate-200">${Math.round(item.price.conv)}</td>
+                    <td class="p-3 text-center border-r border-slate-100 dark:border-slate-800 font-black text-emerald-600 dark:text-emerald-400">${fmt(item.price.premium, 1)}%</td>
                     
-                    <!-- CBAS (均量) -->
-                    <td class="p-4 text-center num-lg ${getCls(item.as.d1)}">${fmt(item.as.d1)}</td>
-                    <td class="p-4 text-center font-bold ${getCls(item.as.d5)}">${fmt(item.as.d5, 1)}</td>
-                    <td class="p-4 text-center border-r border-slate-100 dark:border-slate-800 font-bold ${getCls(item.as.d10)}">${fmt(item.as.d10, 1)}</td>
+                    <td class="p-3 text-center num-xl ${getCls(item.it.d1)}">${fmt(item.it.d1)}</td>
+                    <td class="p-3 text-center font-bold ${getCls(item.it.d5)}">${fmt(item.it.d5)}</td>
+                    <td class="p-3 text-center border-r border-slate-100 dark:border-slate-800 font-bold ${getCls(item.it.d10)}">${fmt(item.it.d10)}</td>
                     
-                    <!-- CB成交量 (均量) -->
-                    <td class="p-4 text-center font-black num-lg text-slate-800 dark:text-slate-100">${fmt(item.vol.d1)}</td>
-                    <td class="p-4 text-center font-bold text-slate-500 dark:text-slate-400">${fmt(item.vol.d5, 1)}</td>
-                    <td class="p-4 text-center border-r border-slate-100 dark:border-slate-800 font-bold text-slate-500 dark:text-slate-400">${fmt(item.vol.d10, 1)}</td>
+                    <td class="p-3 text-center num-xl ${getCls(item.as.d1)}">${fmt(item.as.d1)}</td>
+                    <td class="p-3 text-center font-bold ${getCls(item.as.d5)}">${fmt(item.as.d5, 1)}</td>
+                    <td class="p-3 text-center border-r border-slate-100 dark:border-slate-800 font-bold ${getCls(item.as.d10)}">${fmt(item.as.d10, 1)}</td>
                     
-                    <!-- 融券賣出 (累計) -->
-                    <td class="p-4 text-center num-lg ${getCls(item.sblS.d1)}">${fmt(item.sblS.d1)}</td>
-                    <td class="p-4 text-center font-bold ${getCls(item.sblS.d5)}">${fmt(item.sblS.d5)}</td>
-                    <td class="p-4 text-center border-r border-slate-100 dark:border-slate-800 font-bold ${getCls(item.sblS.d10)}">${fmt(item.sblS.d10)}</td>
+                    <td class="p-3 text-center font-black num-xl text-slate-800 dark:text-slate-100">${fmt(item.vol.d1)}</td>
+                    <td class="p-3 text-center font-bold text-slate-500 dark:text-slate-400">${fmt(item.vol.d5, 1)}</td>
+                    <td class="p-3 text-center border-r border-slate-100 dark:border-slate-800 font-bold text-slate-500 dark:text-slate-400">${fmt(item.vol.d10, 1)}</td>
                     
-                    <!-- 融券現償 (累計) -->
-                    <td class="p-4 text-center num-lg ${getCls(item.sblC.d1)}">${fmt(item.sblC.d1)}</td>
-                    <td class="p-4 text-center font-bold ${getCls(item.sblC.d5)}">${fmt(item.sblC.d5)}</td>
-                    <td class="p-4 text-center font-bold ${getCls(item.sblC.d10)}">${fmt(item.sblC.d10)}</td>
+                    <td class="p-3 text-center num-xl ${getCls(item.sblS.d1)}">${fmt(item.sblS.d1)}</td>
+                    <td class="p-3 text-center font-bold ${getCls(item.sblS.d5)}">${fmt(item.sblS.d5)}</td>
+                    <td class="p-3 text-center border-r border-slate-100 dark:border-slate-800 font-bold ${getCls(item.sblS.d10)}">${fmt(item.sblS.d10)}</td>
+                    
+                    <td class="p-3 text-center num-xl ${getCls(item.sblC.d1)}">${fmt(item.sblC.d1)}</td>
+                    <td class="p-3 text-center font-bold ${getCls(item.sblC.d5)}">${fmt(item.sblC.d5)}</td>
+                    <td class="p-3 text-center font-bold ${getCls(item.sblC.d10)}">${fmt(item.sblC.d10)}</td>
                 `;
                 tbody.appendChild(tr);
             });
