@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CB持有籌碼分析</title>
+    <title>現役 CB 投資分析看板</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         
@@ -21,7 +22,7 @@
             transition: background-color 0.3s;
         }
 
-        /* --- 核心固定邏輯 (版面緊湊化調整) --- */
+        /* --- 核心固定邏輯 --- */
         th { 
             position: sticky !important; 
             box-sizing: border-box;
@@ -34,7 +35,7 @@
         }
 
         .h-row-2 th {
-            top: 52px; /* 緊湊版第一行高度 */
+            top: 52px;
             z-index: 45;
         }
 
@@ -89,7 +90,6 @@
         .val-cell:hover { background-color: rgba(59, 130, 246, 0.1) !important; color: #3b82f6; }
         
         .num-xl { font-size: 1.1rem; letter-spacing: -0.02em; }
-        .num-sm { font-size: 0.875rem; }
         
         .scroll-wrapper {
             overflow-x: auto;
@@ -97,8 +97,20 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        /* 緊湊 Padding */
         td { padding: 0.5rem 0.4rem !important; }
+
+        .chart-row {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        .dark .chart-row {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+        .chart-container {
+            height: 180px;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 p-2 md:p-6 dark:bg-slate-950 dark:text-slate-200">
@@ -107,7 +119,7 @@
         <header class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tighter italic underline decoration-blue-500 decoration-2">CB 投資分析看板</h1>
-                <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm font-medium italic">緊湊版面 · 價格整數化 · 溢價率監控</p>
+                <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm font-medium italic">15日趨勢圖表 · 均量監控模式</p>
             </div>
             <div class="flex items-center gap-3">
                 <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 hover:scale-105 transition-transform">
@@ -120,7 +132,7 @@
             </div>
         </header>
 
-        <!-- 上傳區域 (緊湊化) -->
+        <!-- 上傳區域 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div id="dropBoard" class="upload-card bg-white p-6 rounded-2xl text-center cursor-pointer border-2 border-dashed border-slate-300 dark:bg-slate-900 dark:border-slate-700 hover:border-blue-500 transition-all" onclick="document.getElementById('boardFile').click()">
                 <input type="file" id="boardFile" class="hidden" accept=".csv">
@@ -136,7 +148,6 @@
 
         <!-- 數據分析結果 -->
         <div id="resultSection" class="hidden space-y-4">
-            <!-- 結果頂部工具欄 -->
             <div class="flex justify-between items-center px-1">
                 <span id="matchCount" class="text-xs font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 px-3 py-1.5 rounded-lg shadow-sm border border-blue-200 dark:border-blue-800">匹配: 0 檔</span>
                 <button onclick="location.reload()" class="text-xs font-bold text-slate-400 hover:text-blue-500 transition-colors">重新上傳</button>
@@ -146,7 +157,6 @@
                 <div class="scroll-wrapper">
                     <table id="mainTable" class="w-full text-left border-separate border-spacing-0">
                         <thead>
-                            <!-- 第一行：大區塊 -->
                             <tr class="h-row-1 bg-slate-900 text-white font-bold text-center text-base">
                                 <th class="p-4 sticky-corner-1 text-left min-w-[130px]">標的資訊</th>
                                 <th colspan="3" class="p-2 border-x border-slate-700 bg-emerald-500/30">價格資訊</th>
@@ -156,16 +166,13 @@
                                 <th colspan="3" class="p-2 border-x border-slate-700 bg-red-500/30">融券賣出</th>
                                 <th colspan="3" class="p-2 bg-emerald-500/30">融券現償</th>
                             </tr>
-                            <!-- 第二行：排序欄位 -->
                             <tr class="h-row-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-center text-xs font-bold">
                                 <th class="p-4 sticky-corner-2 text-left border-b border-slate-300 dark:border-slate-700 val-cell" onclick="handleSort('remain')">
                                     代號/剩餘 <span id="sort-remain" class="text-blue-500">⇅</span>
                                 </th>
-                                <!-- 價格 -->
                                 <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700 bg-emerald-50/10" onclick="handleSort('price.cb')">轉債 <span id="sort-price-cb">⇅</span></th>
                                 <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700 bg-emerald-50/10" onclick="handleSort('price.conv')">轉換 <span id="sort-price-conv">⇅</span></th>
                                 <th class="p-2 val-cell border-r border-b border-slate-300 dark:border-slate-700 bg-emerald-50/10 text-emerald-600 dark:text-emerald-400" onclick="handleSort('price.premium')">溢價% <span id="sort-price-premium">⇅</span></th>
-                                <!-- 數據 -->
                                 <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d1')">1D <span id="sort-it-d1">⇅</span></th>
                                 <th class="p-2 val-cell border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d5')">5D累 <span id="sort-it-d5">⇅</span></th>
                                 <th class="p-2 val-cell border-r border-b border-slate-300 dark:border-slate-700" onclick="handleSort('it.d10')">10D累 <span id="sort-it-d10">⇅</span></th>
@@ -205,12 +212,20 @@
         let boardRawRows = [];
         let stockCodes = [];
         let currentData = [];
+        let dateLabels = [];
         let sortState = { key: null, direction: 'desc' };
+        let charts = {};
 
         function toggleDarkMode() {
             const isDark = document.body.classList.toggle('dark');
             document.getElementById('darkIcon').innerText = isDark ? '☀️' : '🌙';
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            // 更新已存在的圖表顏色
+            Object.values(charts).forEach(chart => {
+                chart.options.scales.x.ticks.color = isDark ? '#94a3b8' : '#64748b';
+                chart.options.scales.y.ticks.color = isDark ? '#94a3b8' : '#64748b';
+                chart.update();
+            });
         }
 
         if (localStorage.getItem('theme') === 'dark') {
@@ -257,7 +272,7 @@
                     const h = data[0];
                     const idx = h.findIndex(x => x.includes('代碼') || x.includes('代號'));
                     stockCodes = data.slice(1).map(r => r[idx] || r[1]).filter(v => v);
-                    document.getElementById('stockStatus').innerText = `✅ 持股資料已讀取 (${stockCodes.length})`;
+                    document.getElementById('stockStatus').innerText = `✅ 持股資料已就緒 (${stockCodes.length})`;
                 }
                 if (boardRawRows.length > 0 && stockCodes.length > 0) calculate();
             };
@@ -291,6 +306,11 @@
                 if (iS !== -1) {
                     document.getElementById('lastUpdate').classList.remove('hidden');
                     document.getElementById('baseDate').innerText = `基準日：${h1[iS]}`;
+                    // 獲取圖表日期標籤 (倒序, 從最新到舊)
+                    dateLabels = [];
+                    for (let i = 0; i < 15; i++) {
+                        dateLabels.push(h1[aS + i] || "");
+                    }
                 }
 
                 currentData = body.filter(r => {
@@ -303,6 +323,12 @@
                         for (let i = 0; i < dy; i++) t += cleanNum(r[st + i]);
                         return t;
                     };
+                    const getHistory = (st, dy) => {
+                        let h = [];
+                        for (let i = 0; i < dy; i++) h.push(cleanNum(r[st + i]));
+                        return h;
+                    };
+
                     const cbVal = cleanNum(r[pcS]);
                     const convVal = cleanNum(r[cvS]);
                     const premiumVal = convVal !== 0 ? (cbVal / convVal - 1) * 100 : 0;
@@ -311,7 +337,12 @@
                         code: r[cI], name: r[nI], remain: cleanNum(r[rI]),
                         price: { cb: cbVal, conv: convVal, premium: premiumVal },
                         it: { d1: cleanNum(r[iS]), d5: sum(iS, 5), d10: sum(iS, 10) },
-                        as: { d1: cleanNum(r[aS + 1]), d5: sum(aS, 5) / 5, d10: sum(aS, 10) / 10 },
+                        as: { 
+                            d1: cleanNum(r[aS + 1]), 
+                            d5: sum(aS, 5) / 5, 
+                            d10: sum(aS, 10) / 10,
+                            history15: getHistory(aS, 15)
+                        },
                         vol: { d1: cleanNum(r[vS]), d5: sum(vS, 5) / 5, d10: sum(vS, 10) / 10 },
                         sblS: { d1: cleanNum(r[ssS]), d5: sum(ssS, 5), d10: sum(ssS, 10) },
                         sblC: { d1: cleanNum(r[scS]), d5: sum(scS, 5), d10: sum(scS, 10) }
@@ -331,15 +362,70 @@
             render(sorted);
         }
 
+        function toggleChart(code) {
+            const chartRow = document.getElementById(`chart-row-${code}`);
+            if (!chartRow) return;
+
+            if (chartRow.classList.contains('hidden')) {
+                chartRow.classList.remove('hidden');
+                initChart(code);
+            } else {
+                chartRow.classList.add('hidden');
+                if (charts[code]) {
+                    charts[code].destroy();
+                    delete charts[code];
+                }
+            }
+        }
+
+        function initChart(code) {
+            const ctx = document.getElementById(`chart-${code}`).getContext('2d');
+            const item = currentData.find(d => d.code === code);
+            if (!item) return;
+
+            const isDark = document.body.classList.contains('dark');
+            const dataValues = [...item.as.history15].reverse(); // 轉成從舊到新
+            const labels = [...dateLabels].reverse();
+
+            charts[code] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'CBAS 拆解量',
+                        data: dataValues,
+                        backgroundColor: dataValues.map(v => v >= 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)'),
+                        borderColor: dataValues.map(v => v >= 0 ? '#10b981' : '#ef4444'),
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { size: 10 } }
+                        },
+                        y: {
+                            ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
         function render(data) {
             document.getElementById('loading').classList.add('hidden');
             document.getElementById('resultSection').classList.remove('hidden');
             
-            // 修復點：確保在更新 innerText 前元素存在
             const matchCountEl = document.getElementById('matchCount');
-            if (matchCountEl) {
-                matchCountEl.innerText = `匹配: ${data.length} 檔`;
-            }
+            if (matchCountEl) matchCountEl.innerText = `匹配: ${data.length} 檔`;
 
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = "";
@@ -367,7 +453,10 @@
                 
                 tr.innerHTML = `
                     <td class="p-4 sticky-col border-b border-slate-100 dark:border-slate-800">
-                        <div class="text-xl font-extrabold text-slate-900 dark:text-white">${item.code}</div>
+                        <div class="flex items-center justify-between">
+                            <div class="text-xl font-extrabold text-slate-900 dark:text-white">${item.code}</div>
+                            <button onclick="toggleChart('${item.code}')" class="text-[10px] bg-slate-100 dark:bg-slate-800 border dark:border-slate-700 px-1.5 py-0.5 rounded text-blue-500 font-bold hover:bg-blue-50 dark:hover:bg-blue-900/30">趨勢</button>
+                        </div>
                         <div class="text-[10px] text-slate-400 font-bold truncate w-24">${item.name}</div>
                         <div class="text-[10px] font-black text-blue-500">剩餘 ${fmt(item.remain, 2)}%</div>
                     </td>
@@ -396,6 +485,22 @@
                     <td class="p-3 text-center font-bold ${getCls(item.sblC.d10)}">${fmt(item.sblC.d10)}</td>
                 `;
                 tbody.appendChild(tr);
+
+                // 插入隱藏的圖表行
+                const chartRow = document.createElement('tr');
+                chartRow.id = `chart-row-${item.code}`;
+                chartRow.className = "chart-row hidden";
+                chartRow.innerHTML = `
+                    <td colspan="19" class="p-4 border-b dark:border-slate-800">
+                        <div class="flex flex-col items-center">
+                            <div class="text-xs font-bold text-slate-400 mb-2">${item.code} ${item.name} - 最近 15 日 CBAS 拆解變動趨勢</div>
+                            <div class="chart-container">
+                                <canvas id="chart-${item.code}"></canvas>
+                            </div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(chartRow);
             });
         }
     </script>
